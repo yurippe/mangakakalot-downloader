@@ -14,6 +14,10 @@ Everything has been tested on Windows using Python 3.7.3 and the versions of the
 dependencies found in `requirements.txt`. Note that because we are using f-strings
 the minimum python version required is 3.5
 
+## Optionally, use the exe
+If you are running 64-bit windows and don't care much for python,
+you can navigate to the realeses and download a prebuilt executable.
+
 ## Example usage
 
 ### Download using a text file
