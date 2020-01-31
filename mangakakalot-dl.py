@@ -229,10 +229,10 @@ def download_manga_manganelo(link):
 
     if SAVE_ID:
         data = f"""# {title}
-    Downloaded from: {link}
-    Last run: {datetime.now(timezone.utc)}
+Downloaded from: {link}
+Last run: {datetime.now(timezone.utc)}
 
-    --- DO NOT EDIT ANYTHING ABOVE THIS LINE (you may delete this line itself) ---
+--- DO NOT EDIT ANYTHING ABOVE THIS LINE (you may delete this line itself) ---
     """
         with open(os.path.join(title, "README.mkdl.md"), "w") as readme:
             readme.write(data)
