@@ -14,6 +14,7 @@ DIRCLEANER1 = re.compile("[^\w\-_\. \&]")
 DIRCLEANER2 = re.compile("\s*\:\s*")
 
 SKIP_EXISTING = True
+SKIP_EXISTING_CHAPTERS = False
 SAVE_ID = True
 MAKE_CHAPTER_PDF = True
 
@@ -30,6 +31,10 @@ def download_chapter(title, chapter):
     chapter_title = a_tag.text
     print(f"{title} -- {chapter_title_long} -- {chapter_title} -- {chapter_link}")
     path = os.path.join(title, clean_directory_name(chapter_title))
+
+    if SKIP_EXISTING_CHAPTERS and os.path.exists(path):
+        print(f"Chapter '{chapter_title}' was already found - Skipping")
+        return
 
     result = requests.get(chapter_link)
     result.raise_for_status()
@@ -87,7 +92,75 @@ def download_chapter(title, chapter):
             print("")
 
 
-def download_manga(link):
+def download_chapter_manganelo(title, chapter):
+    a_tag = chapter.find("a")
+    chapter_link = a_tag.get("href")
+    chapter_title_long = a_tag.get("title")
+    chapter_title = a_tag.text
+    print(f"{title} -- {chapter_title_long} -- {chapter_title} -- {chapter_link}")
+    path = os.path.join(title, clean_directory_name(chapter_title))
+
+    if SKIP_EXISTING_CHAPTERS and os.path.exists(path):
+        print(f"Chapter '{chapter_title}' was already found - Skipping")
+        return
+
+    result = requests.get(chapter_link)
+    result.raise_for_status()
+    page_html = result.text
+    soup = BeautifulSoup(page_html, "html.parser")
+
+    if not os.path.exists(path):
+        os.mkdir(path)
+
+    # print(soup.prettify())
+
+    img_list = soup.find(
+        "div", {"class": "container-chapter-reader"}
+    )  # <div class="vung-doc" id="vungdoc">
+    made_files = []
+    for img in img_list.find_all("img"):
+        img_link = img.get("src")
+        img_title = img.get("title", "").strip(" - MangaNelo.com")
+        _, extension = os.path.splitext(img_link)
+
+        img_file_path = clean_directory_name(img_title + extension)
+        img_path = os.path.join(path, img_file_path)
+
+        if SKIP_EXISTING and os.path.isfile(img_path):
+            print(f"The page {img_title} exists as file {img_path} - SKIPPING")
+            made_files.append(img_path)
+            continue
+
+        try:
+            result = requests.get(img_link)
+            result.raise_for_status()
+        except:
+            print(f"Failed to fetch '{img_title}' from '{img_link}'")
+
+        data = result.content
+
+        with open(img_path, "wb") as img_file:
+            img_file.write(data)
+        made_files.append(img_path)
+        print(f"Downloaded {img_title} from {img_link} and saved as {img_path}")
+    if MAKE_CHAPTER_PDF and made_files:
+        print("")
+        print("Attempting to make chapter PDF")
+        try:
+            files = [Image.open(file).convert("RGB") for file in made_files]
+            pdf_path = os.path.join(path, clean_directory_name(chapter_title) + ".pdf")
+            files[0].save(
+                pdf_path, save_all=True, append_images=files[1:], resolution=100
+            )
+            print(f"Made chapter PDF ({len(files)} images)")
+            print("")
+        except Exception as e:
+            print(e)
+            print("Failed to make chapter PDF")
+            print("")
+
+
+def download_manga_default(link):
 
     # Fix up link options, either the full URL or the manga id
     if link.startswith("mangakakalot.com"):
@@ -130,6 +203,55 @@ Last run: {datetime.now(timezone.utc)}
         download_chapter(title, chapter)
 
 
+def download_manga_manganelo(link):
+    # Fix up link options, either the full URL or the manga id
+    if link.startswith("manganelo.com"):
+        link = "https://" + link
+    if not link.startswith("https://manganelo.com/manga"):
+        link = "https://manganelo.com/manga/" + link.strip("/")
+
+    result = requests.get(link)
+    result.raise_for_status()
+    page_html = result.text
+
+    # print(page_html)
+
+    soup = BeautifulSoup(page_html, "html.parser")
+
+    # print(soup.prettify())
+
+    # Might be hacky ?
+    title = soup.find("div", {"class": "story-info-right"}).find("h1").text
+    title = clean_directory_name(title)
+
+    if not os.path.exists(title):
+        os.mkdir(title)
+
+    if SAVE_ID:
+        data = f"""# {title}
+    Downloaded from: {link}
+    Last run: {datetime.now(timezone.utc)}
+
+    --- DO NOT EDIT ANYTHING ABOVE THIS LINE (you may delete this line itself) ---
+    """
+        with open(os.path.join(title, "README.mkdl.md"), "w") as readme:
+            readme.write(data)
+
+    print(f"Downloading title '{title}'")
+    chapter_list = soup.find("ul", {"class": "row-content-chapter"}).find_all("li")[
+        ::-1
+    ]
+    for chapter in chapter_list:
+        download_chapter_manganelo(title, chapter)
+
+
+def download_manga(link):
+    if "manganelo.com" in link:
+        return download_manga_manganelo(link)
+    else:
+        return download_manga_default(link)
+
+
 if __name__ == "__main__":
     import argparse
 
@@ -144,6 +266,14 @@ if __name__ == "__main__":
         default=False,
         action="store_true",
     )
+
+    argparser.add_argument(
+        "--no-ignore-existing-chapters",
+        help="Check every page of a chapter instead of skipping chapters where the directory already exist",
+        default=False,
+        action="store_true",
+    )
+
     argparser.add_argument(
         "--no-save-id",
         help="Do NOT save a .txt file in the root directory to resume this at a later stage",
@@ -187,6 +317,7 @@ if __name__ == "__main__":
     newcwd = os.getcwd()
 
     SKIP_EXISTING = not args.redownload
+    SKIP_EXISTING_CHAPTERS = not args.no_ignore_existing_chapters
     SAVE_ID = not args.no_save_id
     MAKE_CHAPTER_PDF = args.make_pdf
 
