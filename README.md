@@ -11,8 +11,7 @@ pip install Pillow
 (Note that Pillow is only needed for the `--make-pdf` option)
 
 Everything has been tested on Windows using Python 3.7.3 and the versions of the
-dependencies found in `requirements.txt`. Note that because we are using f-strings
-the minimum python version required is 3.5
+dependencies found in `requirements.txt`.
 
 ## Optionally, use the exe
 If you are running 64-bit windows and don't care much for python,
