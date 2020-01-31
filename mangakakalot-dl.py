@@ -29,11 +29,22 @@ def download_chapter(title, chapter):
     chapter_link = a_tag.get("href")
     chapter_title_long = a_tag.get("title")
     chapter_title = a_tag.text
-    print(f"{title} -- {chapter_title_long} -- {chapter_title} -- {chapter_link}")
+    print(
+        "{title} -- {chapter_title_long} -- {chapter_title} -- {chapter_link}".format(
+            title=title,
+            chapter_title_long=chapter_title_long,
+            chapter_title=chapter_title,
+            chapter_link=chapter_link,
+        )
+    )
     path = os.path.join(title, clean_directory_name(chapter_title))
 
     if SKIP_EXISTING_CHAPTERS and os.path.exists(path):
-        print(f"Chapter '{chapter_title}' was already found - Skipping")
+        print(
+            "Chapter '{chapter_title}' was already found - Skipping".format(
+                chapter_title=chapter_title
+            )
+        )
         return
 
     result = requests.get(chapter_link)
@@ -59,7 +70,11 @@ def download_chapter(title, chapter):
         img_path = os.path.join(path, img_file_path)
 
         if SKIP_EXISTING and os.path.isfile(img_path):
-            print(f"The page {img_title} exists as file {img_path} - SKIPPING")
+            print(
+                "The page {img_title} exists as file {img_path} - SKIPPING".format(
+                    img_title=img_title, img_path=img_path
+                )
+            )
             made_files.append(img_path)
             continue
 
@@ -67,14 +82,22 @@ def download_chapter(title, chapter):
             result = requests.get(img_link)
             result.raise_for_status()
         except:
-            print(f"Failed to fetch '{img_title}' from '{img_link}'")
+            print(
+                "Failed to fetch '{img_title}' from '{img_link}'".format(
+                    img_title=img_title, img_link=img_link
+                )
+            )
 
         data = result.content
 
         with open(img_path, "wb") as img_file:
             img_file.write(data)
         made_files.append(img_path)
-        print(f"Downloaded {img_title} from {img_link} and saved as {img_path}")
+        print(
+            "Downloaded {img_title} from {img_link} and saved as {img_path}".format(
+                img_title=img_title, img_link=img_link, img_path=img_path
+            )
+        )
     if MAKE_CHAPTER_PDF and made_files:
         print("")
         print("Attempting to make chapter PDF")
@@ -84,7 +107,7 @@ def download_chapter(title, chapter):
             files[0].save(
                 pdf_path, save_all=True, append_images=files[1:], resolution=100
             )
-            print(f"Made chapter PDF ({len(files)} images)")
+            print("Made chapter PDF ({} images)".format(len(files)))
             print("")
         except Exception as e:
             print(e)
@@ -97,11 +120,22 @@ def download_chapter_manganelo(title, chapter):
     chapter_link = a_tag.get("href")
     chapter_title_long = a_tag.get("title")
     chapter_title = a_tag.text
-    print(f"{title} -- {chapter_title_long} -- {chapter_title} -- {chapter_link}")
+    print(
+        "{title} -- {chapter_title_long} -- {chapter_title} -- {chapter_link}".format(
+            title=title,
+            chapter_title_long=chapter_title_long,
+            chapter_title=chapter_title,
+            chapter_link=chapter_link,
+        )
+    )
     path = os.path.join(title, clean_directory_name(chapter_title))
 
     if SKIP_EXISTING_CHAPTERS and os.path.exists(path):
-        print(f"Chapter '{chapter_title}' was already found - Skipping")
+        print(
+            "Chapter '{chapter_title}' was already found - Skipping".format(
+                chapter_title=chapter_title
+            )
+        )
         return
 
     result = requests.get(chapter_link)
@@ -127,7 +161,11 @@ def download_chapter_manganelo(title, chapter):
         img_path = os.path.join(path, img_file_path)
 
         if SKIP_EXISTING and os.path.isfile(img_path):
-            print(f"The page {img_title} exists as file {img_path} - SKIPPING")
+            print(
+                "The page {img_title} exists as file {img_path} - SKIPPING".format(
+                    img_title=img_title, img_path=img_path
+                )
+            )
             made_files.append(img_path)
             continue
 
@@ -135,14 +173,22 @@ def download_chapter_manganelo(title, chapter):
             result = requests.get(img_link)
             result.raise_for_status()
         except:
-            print(f"Failed to fetch '{img_title}' from '{img_link}'")
+            print(
+                "Failed to fetch '{img_title}' from '{img_link}'".format(
+                    img_title=img_title, img_link=img_link
+                )
+            )
 
         data = result.content
 
         with open(img_path, "wb") as img_file:
             img_file.write(data)
         made_files.append(img_path)
-        print(f"Downloaded {img_title} from {img_link} and saved as {img_path}")
+        print(
+            "Downloaded {img_title} from {img_link} and saved as {img_path}".format(
+                img_title=img_title, img_link=img_link, img_path=img_path
+            )
+        )
     if MAKE_CHAPTER_PDF and made_files:
         print("")
         print("Attempting to make chapter PDF")
@@ -152,7 +198,7 @@ def download_chapter_manganelo(title, chapter):
             files[0].save(
                 pdf_path, save_all=True, append_images=files[1:], resolution=100
             )
-            print(f"Made chapter PDF ({len(files)} images)")
+            print("Made chapter PDF ({} images)".format(len(files)))
             print("")
         except Exception as e:
             print(e)
@@ -186,16 +232,19 @@ def download_manga_default(link):
         os.mkdir(title)
 
     if SAVE_ID:
-        data = f"""# {title}
+        data = """# {title}
 Downloaded from: {link}
-Last run: {datetime.now(timezone.utc)}
+Last run: {last_run}
 
 --- DO NOT EDIT ANYTHING ABOVE THIS LINE (you may delete this line itself) ---
-"""
+""".format(
+            title=title, link=link, last_run=datetime.now(timezone.utc)
+        )
+
         with open(os.path.join(title, "README.mkdl.md"), "w") as readme:
             readme.write(data)
 
-    print(f"Downloading title '{title}'")
+    print("Downloading title '{title}'".format(title=title))
     chapter_list = soup.find("div", {"class": "chapter-list"}).find_all(
         "div", {"class": "row"}
     )[::-1]
@@ -228,16 +277,19 @@ def download_manga_manganelo(link):
         os.mkdir(title)
 
     if SAVE_ID:
-        data = f"""# {title}
+        data = """# {title}
 Downloaded from: {link}
-Last run: {datetime.now(timezone.utc)}
+Last run: {last_run}
 
 --- DO NOT EDIT ANYTHING ABOVE THIS LINE (you may delete this line itself) ---
-    """
+""".format(
+            title=title, link=link, last_run=datetime.now(timezone.utc)
+        )
+
         with open(os.path.join(title, "README.mkdl.md"), "w") as readme:
             readme.write(data)
 
-    print(f"Downloading title '{title}'")
+    print("Downloading title '{title}'".format(title=title))
     chapter_list = soup.find("ul", {"class": "row-content-chapter"}).find_all("li")[
         ::-1
     ]
@@ -327,7 +379,7 @@ if __name__ == "__main__":
                 download_manga(manga_id)
             except Exception as e:
                 print(e)
-                print(f"Failed to download manga '{manga_id}'")
+                print("Failed to download manga '{manga_id}'".format(manga_id=manga_id))
             print(" ---- ")
 
     elif args.command == "download-list":
@@ -340,7 +392,7 @@ if __name__ == "__main__":
                 download_manga(manga_id)
             except Exception as e:
                 print(e)
-                print(f"Failed to download manga '{manga_id}'")
+                print("Failed to download manga '{manga_id}'".format(manga_id=manga_id))
             print(" ---- ")
 
     elif args.command == "resume-all":
@@ -355,13 +407,15 @@ if __name__ == "__main__":
                     url = readme_file.readline().strip()
                     url = url[url.find("https://") :]
                     print(
-                        f"Found manga that can be resumed: '{title}' -- using url: {url}"
+                        "Found manga that can be resumed: '{title}' -- using url: {url}".format(
+                            title=title, url=url
+                        )
                     )
                 try:
                     download_manga(url)
                 except Exception as e:
                     print(e)
-                    print(f"Failed to download manga '{url}'")
+                    print("Failed to download manga '{url}'".format(url=url))
                 print(" ---- ")
     else:
         argparser.print_help()
