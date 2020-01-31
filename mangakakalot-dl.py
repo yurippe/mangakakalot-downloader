@@ -11,8 +11,10 @@ import os
 import re
 from datetime import datetime, timezone
 
-DIRCLEANER1 = re.compile("[^\w\-_\. \&]")
-DIRCLEANER2 = re.compile("\s*\:\s*")
+DIRCLEANER1 = re.compile(r"[^\w\-_ .&]")
+DIRCLEANER2 = re.compile(r"\s*:\s*")
+DIRCLEANER3 = re.compile(r"^\.")
+DIRCLEANER4 = re.compile(r"(\.| - )$")
 
 SKIP_EXISTING = True
 SKIP_EXISTING_CHAPTERS = False
@@ -22,7 +24,10 @@ MAKE_CHAPTER_PDF = True
 
 def clean_directory_name(path):
     path = DIRCLEANER2.sub(" - ", path)
-    return DIRCLEANER1.sub("_", path)
+    path = DIRCLEANER1.sub("_", path)
+    path = DIRCLEANER3.sub("_", path)
+    path = DIRCLEANER4.sub("", path)
+    return path
 
 
 def download_chapter(title, chapter):
