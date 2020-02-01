@@ -10,6 +10,7 @@ except:
 import os
 import re
 from datetime import datetime, timezone
+import time
 
 DIRCLEANER1 = re.compile(r"[^\w\-_ .&]")
 DIRCLEANER2 = re.compile(r"\s*:\s*")
@@ -28,6 +29,29 @@ def clean_directory_name(path):
     path = DIRCLEANER3.sub("_", path)
     path = DIRCLEANER4.sub("", path)
     return path
+
+
+def get_image_from_link(img_link):
+    try:
+        backoff = [1, 2, 4, 8]
+        boff_i = 0
+        while True:
+            result = requests.get(img_link)
+            if boff_i < len(backoff) and not result.status_code == 200:
+                print(
+                    "Bad status code: {status_code} retrying in {retry_in}".format(
+                        status_code=result.status_code, retry_in=backoff[boff_i]
+                    )
+                )
+                time.sleep(backoff[boff_i])
+                boff_i += (
+                    1
+                )  # Eventually throws an index out of bounds exception, so we get out of this look
+            else:
+                result.raise_for_status()
+                return result
+    except:
+        return None
 
 
 def download_chapter(title, chapter):
@@ -84,15 +108,14 @@ def download_chapter(title, chapter):
             made_files.append(img_path)
             continue
 
-        try:
-            result = requests.get(img_link)
-            result.raise_for_status()
-        except:
+        result = get_image_from_link(img_link)
+        if result is None:
             print(
                 "Failed to fetch '{img_title}' from '{img_link}'".format(
                     img_title=img_title, img_link=img_link
                 )
             )
+            continue
 
         data = result.content
 
@@ -175,15 +198,14 @@ def download_chapter_manganelo(title, chapter):
             made_files.append(img_path)
             continue
 
-        try:
-            result = requests.get(img_link)
-            result.raise_for_status()
-        except:
+        result = get_image_from_link(img_link)
+        if result is None:
             print(
                 "Failed to fetch '{img_title}' from '{img_link}'".format(
                     img_title=img_title, img_link=img_link
                 )
             )
+            continue
 
         data = result.content
 
