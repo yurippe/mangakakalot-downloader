@@ -1,3 +1,6 @@
+# DEPRECATED
+This project does not work anymore. Mangakakalot has started using techniques to prevent scraping like this. This will probably not be fixed in this project.
+
 # mangakakalot-downloader
 Python script to download manga from mangakakalot
 
